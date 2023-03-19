@@ -104,7 +104,7 @@ impl<'a> Scanner<'a> {
 #[cfg(test)]
 mod tests {
     use crate::scanner::Scanner;
-    use crate::token::TokenType;
+    use crate::token::{TokenType, Lexeme};
     use peekmore::PeekMore;
 
     #[test]
@@ -122,7 +122,9 @@ mod tests {
         let mut scanner = Scanner::new("* + - ( } ) { , . ;");
         scanner.scan_tokens();
         assert_eq!(scanner.tokens.get(0).unwrap().token_type, TokenType::Star);
+        assert_eq!(scanner.tokens.get(0).unwrap().lexeme, Lexeme::String("*"));
         assert_eq!(scanner.tokens.get(1).unwrap().token_type, TokenType::Plus);
+        assert_eq!(scanner.tokens.get(1).unwrap().lexeme, Lexeme::String("+"));
         assert_eq!(scanner.tokens.get(2).unwrap().token_type, TokenType::Minus);
         assert_eq!(
             scanner.tokens.get(3).unwrap().token_type,
