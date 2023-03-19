@@ -1,4 +1,4 @@
-use peekmore::{PeekMore};
+use peekmore::PeekMore;
 
 use crate::token::*;
 
@@ -34,10 +34,12 @@ impl<'a> Scanner<'a> {
                 Some((i, '+')) => self.add_token(TokenType::Plus, i, 1),
                 Some((i, ';')) => self.add_token(TokenType::Semicolon, i, 1),
                 Some((i, '*')) => self.add_token(TokenType::Star, i, 1),
-                
-                Some((_, character)) => self.report(format!("Unexpect character [{}]", character).as_str()),
 
-                None => break
+                Some((_, character)) => {
+                    self.report(format!("Unexpect character [{}]", character).as_str())
+                }
+
+                None => break,
             }
         }
     }
@@ -57,9 +59,9 @@ impl<'a> Scanner<'a> {
 
 #[cfg(test)]
 mod tests {
-    use peekmore::PeekMore;
     use crate::scanner::Scanner;
     use crate::token::TokenType;
+    use peekmore::PeekMore;
 
     #[test]
     fn iterator() {
@@ -78,12 +80,27 @@ mod tests {
         assert_eq!(scanner.tokens.get(0).unwrap().token_type, TokenType::Star);
         assert_eq!(scanner.tokens.get(1).unwrap().token_type, TokenType::Plus);
         assert_eq!(scanner.tokens.get(2).unwrap().token_type, TokenType::Minus);
-        assert_eq!(scanner.tokens.get(3).unwrap().token_type, TokenType::LeftParen);
-        assert_eq!(scanner.tokens.get(4).unwrap().token_type, TokenType::RightBrace);
-        assert_eq!(scanner.tokens.get(5).unwrap().token_type, TokenType::RightParen);
-        assert_eq!(scanner.tokens.get(6).unwrap().token_type, TokenType::LeftBrace);
+        assert_eq!(
+            scanner.tokens.get(3).unwrap().token_type,
+            TokenType::LeftParen
+        );
+        assert_eq!(
+            scanner.tokens.get(4).unwrap().token_type,
+            TokenType::RightBrace
+        );
+        assert_eq!(
+            scanner.tokens.get(5).unwrap().token_type,
+            TokenType::RightParen
+        );
+        assert_eq!(
+            scanner.tokens.get(6).unwrap().token_type,
+            TokenType::LeftBrace
+        );
         assert_eq!(scanner.tokens.get(7).unwrap().token_type, TokenType::Comma);
         assert_eq!(scanner.tokens.get(8).unwrap().token_type, TokenType::Dot);
-        assert_eq!(scanner.tokens.get(9).unwrap().token_type, TokenType::Semicolon);
+        assert_eq!(
+            scanner.tokens.get(9).unwrap().token_type,
+            TokenType::Semicolon
+        );
     }
 }
