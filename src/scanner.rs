@@ -35,6 +35,35 @@ impl<'a> Scanner<'a> {
                 Some((i, ';')) => self.add_token(TokenType::Semicolon, i, 1),
                 Some((i, '*')) => self.add_token(TokenType::Star, i, 1),
 
+                Some((i, '!')) => self.add_matches_token(
+                    TokenType::Bang,
+                    iter.peek(),
+                    '=',
+                    TokenType::BangEqual,
+                    i,
+                ),
+                Some((i, '=')) => self.add_matches_token(
+                    TokenType::Equal,
+                    iter.peek(),
+                    '=',
+                    TokenType::EqulaEqual,
+                    i,
+                ),
+                Some((i, '<')) => self.add_matches_token(
+                    TokenType::Less,
+                    iter.peek(),
+                    '=',
+                    TokenType::LessEqual,
+                    i,
+                ),
+                Some((i, '>')) => self.add_matches_token(
+                    TokenType::Greater,
+                    iter.peek(),
+                    '=',
+                    TokenType::GreaterEqual,
+                    i,
+                ),
+
                 Some((_, character)) => {
                     self.report(format!("Unexpect character [{}]", character).as_str())
                 }
@@ -54,6 +83,21 @@ impl<'a> Scanner<'a> {
             line: self.line,
             lexeme: Lexeme::String(&self.source[start..start + len]),
         });
+    }
+
+    fn add_matches_token(
+        &mut self,
+        token_type: TokenType,
+        next_char: Option<&(usize, char)>,
+        matches_char: char,
+        matches_token_type: TokenType,
+        start: usize,
+    ) {
+        let (token_type_added, len) = match next_char {
+            Some((_, char)) if *char == matches_char => (matches_token_type, 2),
+            _ => (token_type, 1),
+        };
+        self.add_token(token_type_added, start, len);
     }
 }
 
