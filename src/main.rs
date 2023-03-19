@@ -1,3 +1,4 @@
+use lox::scanner::Scanner;
 use std::{
     env, fs,
     io::{self, Write},
@@ -32,5 +33,6 @@ fn run_file(file_name: &str) {
 }
 
 fn run(content: String) {
-    println!("Run: {}", content);
+    let mut scanner = Scanner::new(content.as_str());
+    scanner.scan_tokens();
 }
