@@ -1,10 +1,11 @@
-use peekmore::PeekMore;
-
 use crate::token::*;
+use peekmore::{PeekMore, PeekMoreIterator};
+use std::str::CharIndices;
 
 #[derive(Debug)]
 pub struct Scanner<'a> {
     source: &'a str,
+    iter: PeekMoreIterator<CharIndices<'a>>,
     tokens: Vec<Token<'a>>,
     line: u32,
 }
@@ -13,15 +14,15 @@ impl<'a> Scanner<'a> {
     pub fn new(source: &'a str) -> Self {
         Self {
             source: source,
+            iter: source.char_indices().peekmore(),
             tokens: Vec::new(),
             line: 1,
         }
     }
 
     pub fn scan_tokens(&mut self) {
-        let mut iter = self.source.char_indices().peekmore();
         loop {
-            match iter.next() {
+            match self.iter.next() {
                 Some((_, ' ')) => continue,
                 Some((_, '\n')) => self.line = self.line + 1,
                 Some((i, '(')) => self.add_token(TokenType::LeftParen, i, 1),
@@ -35,34 +36,18 @@ impl<'a> Scanner<'a> {
                 Some((i, ';')) => self.add_token(TokenType::Semicolon, i, 1),
                 Some((i, '*')) => self.add_token(TokenType::Star, i, 1),
 
-                Some((i, '!')) => self.add_matches_token(
-                    TokenType::Bang,
-                    iter.peek(),
-                    '=',
-                    TokenType::BangEqual,
-                    i,
-                ),
-                Some((i, '=')) => self.add_matches_token(
-                    TokenType::Equal,
-                    iter.peek(),
-                    '=',
-                    TokenType::EqulaEqual,
-                    i,
-                ),
-                Some((i, '<')) => self.add_matches_token(
-                    TokenType::Less,
-                    iter.peek(),
-                    '=',
-                    TokenType::LessEqual,
-                    i,
-                ),
-                Some((i, '>')) => self.add_matches_token(
-                    TokenType::Greater,
-                    iter.peek(),
-                    '=',
-                    TokenType::GreaterEqual,
-                    i,
-                ),
+                Some((i, '!')) => {
+                    self.add_matches_token(TokenType::Bang, '=', TokenType::BangEqual, i)
+                }
+                Some((i, '=')) => {
+                    self.add_matches_token(TokenType::Equal, '=', TokenType::EqulaEqual, i)
+                }
+                Some((i, '<')) => {
+                    self.add_matches_token(TokenType::Less, '=', TokenType::LessEqual, i)
+                }
+                Some((i, '>')) => {
+                    self.add_matches_token(TokenType::Greater, '=', TokenType::GreaterEqual, i)
+                }
 
                 Some((_, character)) => {
                     self.report(format!("Unexpect character [{}]", character).as_str())
@@ -83,17 +68,19 @@ impl<'a> Scanner<'a> {
             line: self.line,
             lexeme: Lexeme::String(&self.source[start..start + len]),
         });
+        for _ in 1..len {
+            self.iter.next();
+        }
     }
 
     fn add_matches_token(
         &mut self,
         token_type: TokenType,
-        next_char: Option<&(usize, char)>,
         matches_char: char,
         matches_token_type: TokenType,
         start: usize,
     ) {
-        let (token_type_added, len) = match next_char {
+        let (token_type_added, len) = match self.iter.peek() {
             Some((_, char)) if *char == matches_char => (matches_token_type, 2),
             _ => (token_type, 1),
         };
@@ -104,7 +91,7 @@ impl<'a> Scanner<'a> {
 #[cfg(test)]
 mod tests {
     use crate::scanner::Scanner;
-    use crate::token::{TokenType, Lexeme};
+    use crate::token::{Lexeme, TokenType};
     use peekmore::PeekMore;
 
     #[test]
@@ -148,5 +135,20 @@ mod tests {
             scanner.tokens.get(9).unwrap().token_type,
             TokenType::Semicolon
         );
+    }
+
+    #[test]
+    fn two_character() {
+        let mut scanner = Scanner::new("*!=!+ - ( } ) { , . ;");
+        scanner.scan_tokens();
+        assert_eq!(scanner.tokens.get(0).unwrap().token_type, TokenType::Star);
+        assert_eq!(scanner.tokens.get(0).unwrap().lexeme, Lexeme::String("*"));
+        assert_eq!(
+            scanner.tokens.get(1).unwrap().token_type,
+            TokenType::BangEqual
+        );
+        assert_eq!(scanner.tokens.get(1).unwrap().lexeme, Lexeme::String("!="));
+        assert_eq!(scanner.tokens.get(2).unwrap().token_type, TokenType::Bang);
+        assert_eq!(scanner.tokens.get(2).unwrap().lexeme, Lexeme::String("!"));
     }
 }
