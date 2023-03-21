@@ -1,12 +1,14 @@
-use crate::token::*;
+use crate::token::{Lexeme, Token, TokenType};
 use peekmore::{PeekMore, PeekMoreIterator};
-use std::str::CharIndices;
+use std::str::Chars;
 
 #[derive(Debug)]
 pub struct Scanner<'a> {
     source: &'a str,
-    iter: PeekMoreIterator<CharIndices<'a>>,
+    iter: PeekMoreIterator<Chars<'a>>,
     tokens: Vec<Token<'a>>,
+    start: usize,
+    current: usize,
     line: u32,
 }
 
@@ -14,42 +16,39 @@ impl<'a> Scanner<'a> {
     pub fn new(source: &'a str) -> Self {
         Self {
             source: source,
-            iter: source.char_indices().peekmore(),
+            iter: source.chars().peekmore(),
             tokens: Vec::new(),
+            start: 0,
+            current: 0,
             line: 1,
         }
     }
 
     pub fn scan_tokens(&mut self) {
         loop {
-            match self.iter.next() {
-                Some((_, ' ')) => continue,
-                Some((_, '\n')) => self.line = self.line + 1,
-                Some((i, '(')) => self.add_token(TokenType::LeftParen, i, 1),
-                Some((i, ')')) => self.add_token(TokenType::RightParen, i, 1),
-                Some((i, '{')) => self.add_token(TokenType::LeftBrace, i, 1),
-                Some((i, '}')) => self.add_token(TokenType::RightBrace, i, 1),
-                Some((i, ',')) => self.add_token(TokenType::Comma, i, 1),
-                Some((i, '.')) => self.add_token(TokenType::Dot, i, 1),
-                Some((i, '-')) => self.add_token(TokenType::Minus, i, 1),
-                Some((i, '+')) => self.add_token(TokenType::Plus, i, 1),
-                Some((i, ';')) => self.add_token(TokenType::Semicolon, i, 1),
-                Some((i, '*')) => self.add_token(TokenType::Star, i, 1),
+            self.start = self.current;
+            match self.advance() {
+                Some(' ') => continue,
+                Some('\n') => self.line = self.line + 1,
+                Some('(') => self.add_token(TokenType::LeftParen),
+                Some(')') => self.add_token(TokenType::RightParen),
+                Some('{') => self.add_token(TokenType::LeftBrace),
+                Some('}') => self.add_token(TokenType::RightBrace),
+                Some(',') => self.add_token(TokenType::Comma),
+                Some('.') => self.add_token(TokenType::Dot),
+                Some('-') => self.add_token(TokenType::Minus),
+                Some('+') => self.add_token(TokenType::Plus),
+                Some(';') => self.add_token(TokenType::Semicolon),
+                Some('*') => self.add_token(TokenType::Star),
 
-                Some((i, '!')) => {
-                    self.add_matches_token(TokenType::Bang, '=', TokenType::BangEqual, i)
-                }
-                Some((i, '=')) => {
-                    self.add_matches_token(TokenType::Equal, '=', TokenType::EqulaEqual, i)
-                }
-                Some((i, '<')) => {
-                    self.add_matches_token(TokenType::Less, '=', TokenType::LessEqual, i)
-                }
-                Some((i, '>')) => {
-                    self.add_matches_token(TokenType::Greater, '=', TokenType::GreaterEqual, i)
+                Some('!') => self.add_matches_token(TokenType::Bang, '=', TokenType::BangEqual),
+                Some('=') => self.add_matches_token(TokenType::Equal, '=', TokenType::EqulaEqual),
+                Some('<') => self.add_matches_token(TokenType::Less, '=', TokenType::LessEqual),
+                Some('>') => {
+                    self.add_matches_token(TokenType::Greater, '=', TokenType::GreaterEqual)
                 }
 
-                Some((_, character)) => {
+                Some(character) => {
                     self.report(format!("Unexpect character [{}]", character).as_str())
                 }
 
@@ -62,29 +61,36 @@ impl<'a> Scanner<'a> {
         println!("[line {}] Error: {}", self.line, message);
     }
 
-    fn add_token(&mut self, token_type: TokenType, start: usize, len: usize) {
+    fn add_token(&mut self, token_type: TokenType) {
         self.tokens.push(Token {
             token_type: token_type,
             line: self.line,
-            lexeme: Lexeme::String(&self.source[start..start + len]),
+            lexeme: Lexeme::String(&self.source[self.start..self.current]),
         });
-        for _ in 1..len {
-            self.iter.next();
-        }
     }
 
     fn add_matches_token(
         &mut self,
-        token_type: TokenType,
+        unmatches_token_type: TokenType,
         matches_char: char,
         matches_token_type: TokenType,
-        start: usize,
     ) {
-        let (token_type_added, len) = match self.iter.peek() {
-            Some((_, char)) if *char == matches_char => (matches_token_type, 2),
-            _ => (token_type, 1),
+        let token_type = if self.peek() == Some(&matches_char) {
+            self.advance();
+            matches_token_type
+        } else {
+            unmatches_token_type
         };
-        self.add_token(token_type_added, start, len);
+        self.add_token(token_type);
+    }
+
+    fn advance(&mut self) -> Option<char> {
+        self.current += 1;
+        self.iter.next()
+    }
+
+    fn peek(&mut self) -> Option<&char> {
+        self.iter.peek()
     }
 }
 
