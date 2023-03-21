@@ -26,10 +26,9 @@ impl<'a> Scanner<'a> {
 
     pub fn scan_tokens(&mut self) {
         loop {
+            self.whitespace();
             self.start = self.current;
             match self.advance() {
-                Some(' ') => continue,
-                Some('\n') => self.line = self.line + 1,
                 Some('(') => self.add_token(TokenType::LeftParen),
                 Some(')') => self.add_token(TokenType::RightParen),
                 Some('{') => self.add_token(TokenType::LeftBrace),
@@ -84,6 +83,37 @@ impl<'a> Scanner<'a> {
         self.add_token(token_type);
     }
 
+    fn whitespace(&mut self) {
+        loop {
+            match self.peek() {
+                Some(' ') | Some('\r') | Some('\t') => {
+                    self.advance();
+                }
+                Some('\n') => {
+                    self.advance();
+                    self.line += 1;
+                }
+                Some('/') => {
+                    if self.peek_next() == Some(&'/') {
+                        self.advance();
+                        self.advance();
+                        loop {
+                            match self.peek() {
+                                Some('\n') | None => {
+                                    break;
+                                }
+                                _ => {
+                                    self.advance();
+                                }
+                            }
+                        }
+                    }
+                }
+                _ => break,
+            }
+        }
+    }
+
     fn advance(&mut self) -> Option<char> {
         self.current += 1;
         self.iter.next()
@@ -91,6 +121,10 @@ impl<'a> Scanner<'a> {
 
     fn peek(&mut self) -> Option<&char> {
         self.iter.peek()
+    }
+
+    fn peek_next(&mut self) -> Option<&char> {
+        self.iter.peek_nth(1)
     }
 }
 
@@ -156,5 +190,24 @@ mod tests {
         assert_eq!(scanner.tokens.get(1).unwrap().lexeme, Lexeme::String("!="));
         assert_eq!(scanner.tokens.get(2).unwrap().token_type, TokenType::Bang);
         assert_eq!(scanner.tokens.get(2).unwrap().lexeme, Lexeme::String("!"));
+    }
+
+    #[test]
+    fn whitespace() {
+        let mut scanner = Scanner::new("    \n    * //     \n !=   \n!+ - ( } ) { , . ;");
+        scanner.scan_tokens();
+        assert_eq!(scanner.tokens.get(0).unwrap().token_type, TokenType::Star);
+        assert_eq!(scanner.tokens.get(0).unwrap().line, 2);
+        assert_eq!(scanner.tokens.get(0).unwrap().lexeme, Lexeme::String("*"));
+        assert_eq!(
+            scanner.tokens.get(1).unwrap().token_type,
+            TokenType::BangEqual
+        );
+        assert_eq!(scanner.tokens.get(1).unwrap().lexeme, Lexeme::String("!="));
+        assert_eq!(scanner.tokens.get(1).unwrap().line, 3);
+        assert_eq!(scanner.tokens.get(2).unwrap().token_type, TokenType::Bang);
+        assert_eq!(scanner.tokens.get(2).unwrap().line, 4);
+        assert_eq!(scanner.tokens.get(3).unwrap().token_type, TokenType::Plus);
+        assert_eq!(scanner.tokens.get(3).unwrap().line, 4);
     }
 }
