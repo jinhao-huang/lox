@@ -39,6 +39,7 @@ impl<'a> Scanner<'a> {
                 Some('+') => self.add_token(TokenType::Plus),
                 Some(';') => self.add_token(TokenType::Semicolon),
                 Some('*') => self.add_token(TokenType::Star),
+                Some('/') => self.add_token(TokenType::Slash),
 
                 Some('!') => self.add_matches_token(TokenType::Bang, '=', TokenType::BangEqual),
                 Some('=') => self.add_matches_token(TokenType::Equal, '=', TokenType::EqulaEqual),
@@ -107,6 +108,8 @@ impl<'a> Scanner<'a> {
                                 }
                             }
                         }
+                    } else {
+                        break;
                     }
                 }
                 _ => break,
@@ -209,5 +212,22 @@ mod tests {
         assert_eq!(scanner.tokens.get(2).unwrap().line, 4);
         assert_eq!(scanner.tokens.get(3).unwrap().token_type, TokenType::Plus);
         assert_eq!(scanner.tokens.get(3).unwrap().line, 4);
+    }
+
+    #[test]
+    fn slash() {
+        let mut scanner = Scanner::new("// test hahahhaha \n * / + ==");
+        scanner.scan_tokens();
+        assert_eq!(scanner.tokens.get(0).unwrap().token_type, TokenType::Star);
+        assert_eq!(scanner.tokens.get(0).unwrap().line, 2);
+        assert_eq!(scanner.tokens.get(1).unwrap().token_type, TokenType::Slash);
+        assert_eq!(scanner.tokens.get(1).unwrap().line, 2);
+        assert_eq!(scanner.tokens.get(2).unwrap().token_type, TokenType::Plus);
+        assert_eq!(scanner.tokens.get(2).unwrap().line, 2);
+        assert_eq!(
+            scanner.tokens.get(3).unwrap().token_type,
+            TokenType::EqulaEqual
+        );
+        assert_eq!(scanner.tokens.get(3).unwrap().line, 2);
     }
 }
