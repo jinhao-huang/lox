@@ -49,6 +49,7 @@ impl<'a> Scanner<'a> {
                 }
 
                 Some('"') => self.string(),
+                Some('0'..='9') => self.number(),
 
                 Some(character) => {
                     self.report(format!("Unexpect character [{}]", character).as_str())
@@ -65,9 +66,15 @@ impl<'a> Scanner<'a> {
 
     fn add_token(&mut self, token_type: TokenType) {
         self.tokens.push(Token {
+            lexeme: {
+                if token_type == TokenType::Number {
+                    Lexeme::Number(self.source[self.start..self.current].parse().unwrap())
+                } else {
+                    Lexeme::String(&self.source[self.start..self.current])
+                }
+            },
             token_type: token_type,
             line: self.line,
-            lexeme: Lexeme::String(&self.source[self.start..self.current]),
         });
     }
 
@@ -141,6 +148,32 @@ impl<'a> Scanner<'a> {
                 }
             }
         }
+    }
+
+    // Panic: Values exceeding f64's range will result in a panic.
+    fn number(&mut self) -> () {
+        loop {
+            match self.peek() {
+                Some('0'..='9') => {
+                    self.advance();
+                }
+                _ => break,
+            }
+        }
+
+        if self.peek() == Some(&'.') && self.peek_next().unwrap().is_digit(10) {
+            self.advance();
+            loop {
+                match self.peek() {
+                    Some('0'..='9') => {
+                        self.advance();
+                    }
+                    _ => break,
+                }
+            }
+        }
+
+        self.add_token(TokenType::Number);
     }
 
     fn advance(&mut self) -> Option<char> {
@@ -278,6 +311,42 @@ mod tests {
         assert_eq!(
             scanner.tokens.get(2).unwrap().lexeme,
             Lexeme::String("test3")
+        );
+    }
+
+    #[test]
+    fn number() {
+        let mut scanner = Scanner::new("123 123.123 123.7890123 123.7890123456789 4242489748472");
+        scanner.scan_tokens();
+        assert_eq!(scanner.tokens.get(0).unwrap().token_type, TokenType::Number);
+        assert_eq!(scanner.tokens.get(0).unwrap().line, 1);
+        assert_eq!(
+            scanner.tokens.get(0).unwrap().lexeme,
+            Lexeme::Number(123.0)
+        );
+        assert_eq!(scanner.tokens.get(1).unwrap().token_type, TokenType::Number);
+        assert_eq!(scanner.tokens.get(1).unwrap().line, 1);
+        assert_eq!(
+            scanner.tokens.get(1).unwrap().lexeme,
+            Lexeme::Number(123.123)
+        );
+        assert_eq!(scanner.tokens.get(2).unwrap().token_type, TokenType::Number);
+        assert_eq!(scanner.tokens.get(2).unwrap().line, 1);
+        assert_eq!(
+            scanner.tokens.get(2).unwrap().lexeme,
+            Lexeme::Number(123.7890123)
+        );
+        assert_eq!(scanner.tokens.get(3).unwrap().token_type, TokenType::Number);
+        assert_eq!(scanner.tokens.get(3).unwrap().line, 1);
+        assert_eq!(
+            scanner.tokens.get(3).unwrap().lexeme,
+            Lexeme::Number(123.7890123456789)
+        );
+        assert_eq!(scanner.tokens.get(4).unwrap().token_type, TokenType::Number);
+        assert_eq!(scanner.tokens.get(4).unwrap().line, 1);
+        assert_eq!(
+            scanner.tokens.get(4).unwrap().lexeme,
+            Lexeme::Number(4242489748472.0)
         );
     }
 }

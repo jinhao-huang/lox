@@ -52,7 +52,7 @@ pub enum TokenType {
 #[derive(Debug, PartialEq)]
 pub enum Lexeme<'a> {
     String(&'a str),
-    Number(i32),
+    Number(f64),
 }
 
 #[derive(Debug)]
