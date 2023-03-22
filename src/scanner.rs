@@ -48,6 +48,8 @@ impl<'a> Scanner<'a> {
                     self.add_matches_token(TokenType::Greater, '=', TokenType::GreaterEqual)
                 }
 
+                Some('"') => self.string(),
+
                 Some(character) => {
                     self.report(format!("Unexpect character [{}]", character).as_str())
                 }
@@ -113,6 +115,30 @@ impl<'a> Scanner<'a> {
                     }
                 }
                 _ => break,
+            }
+        }
+    }
+
+    fn string(&mut self) -> () {
+        self.start += 1;
+        loop {
+            match self.peek() {
+                Some('"') => {
+                    self.add_token(TokenType::String);
+                    self.advance();
+                    break;
+                }
+                Some('\n') => {
+                    self.advance();
+                    self.line += 1;
+                }
+                None => {
+                    self.report("Unterminated string.");
+                    break;
+                }
+                _ => {
+                    self.advance();
+                }
             }
         }
     }
@@ -229,5 +255,29 @@ mod tests {
             TokenType::EqulaEqual
         );
         assert_eq!(scanner.tokens.get(3).unwrap().line, 2);
+    }
+
+    #[test]
+    fn string() {
+        let mut scanner = Scanner::new(r##" "test" "test2" "test3" "##);
+        scanner.scan_tokens();
+        assert_eq!(scanner.tokens.get(0).unwrap().token_type, TokenType::String);
+        assert_eq!(scanner.tokens.get(0).unwrap().line, 1);
+        assert_eq!(
+            scanner.tokens.get(0).unwrap().lexeme,
+            Lexeme::String("test")
+        );
+        assert_eq!(scanner.tokens.get(1).unwrap().token_type, TokenType::String);
+        assert_eq!(scanner.tokens.get(1).unwrap().line, 1);
+        assert_eq!(
+            scanner.tokens.get(1).unwrap().lexeme,
+            Lexeme::String("test2")
+        );
+        assert_eq!(scanner.tokens.get(2).unwrap().token_type, TokenType::String);
+        assert_eq!(scanner.tokens.get(2).unwrap().line, 1);
+        assert_eq!(
+            scanner.tokens.get(2).unwrap().lexeme,
+            Lexeme::String("test3")
+        );
     }
 }
