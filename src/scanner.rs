@@ -105,8 +105,6 @@ impl<'a> Scanner<'a> {
                 }
                 Some('/') => {
                     if self.peek_next() == Some(&'/') {
-                        self.advance();
-                        self.advance();
                         loop {
                             match self.peek() {
                                 Some('\n') | None => {
