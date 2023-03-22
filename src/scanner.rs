@@ -50,6 +50,7 @@ impl<'a> Scanner<'a> {
 
                 Some('"') => self.string(),
                 Some('0'..='9') => self.number(),
+                Some('a'..='z') | Some('A'..='Z') | Some('_') => self.identifier(),
 
                 Some(character) => {
                     self.report(format!("Unexpect character [{}]", character).as_str())
@@ -173,6 +174,39 @@ impl<'a> Scanner<'a> {
         }
 
         self.add_token(TokenType::Number);
+    }
+
+    fn identifier(&mut self) -> () {
+        loop {
+            match self.peek() {
+                Some('a'..='z') | Some('A'..='Z') | Some('0'..='9') | Some('_') => {
+                    self.advance();
+                }
+                _ => break,
+            }
+        }
+
+        let lexeme = &self.source[self.start..self.current];
+        let token_type = match lexeme {
+            "and" => TokenType::And,
+            "class" => TokenType::Class,
+            "else" => TokenType::Else,
+            "false" => TokenType::False,
+            "for" => TokenType::For,
+            "fun" => TokenType::Fun,
+            "if" => TokenType::If,
+            "nil" => TokenType::Nil,
+            "or" => TokenType::Or,
+            "print" => TokenType::Print,
+            "return" => TokenType::Return,
+            "super" => TokenType::Super,
+            "this" => TokenType::This,
+            "true" => TokenType::True,
+            "var" => TokenType::Var,
+            "while" => TokenType::While,
+            _ => TokenType::Identifier,
+        };
+        self.add_token(token_type);
     }
 
     fn advance(&mut self) -> Option<char> {
@@ -430,6 +464,134 @@ mod tests {
             tokens.get(4).unwrap(),
             TokenType::Number,
             Lexeme::Number(4242489748472.0),
+            1,
+        );
+    }
+
+    #[test]
+    fn identifier() {
+        let mut scanner = Scanner::new("test test2 test3");
+        let tokens = scanner.scan_tokens();
+        assert_token(
+            tokens.get(0).unwrap(),
+            TokenType::Identifier,
+            Lexeme::String("test"),
+            1,
+        );
+        assert_token(
+            tokens.get(1).unwrap(),
+            TokenType::Identifier,
+            Lexeme::String("test2"),
+            1,
+        );
+        assert_token(
+            tokens.get(2).unwrap(),
+            TokenType::Identifier,
+            Lexeme::String("test3"),
+            1,
+        );
+    }
+
+    #[test]
+    fn keyword() {
+        let mut scanner = Scanner::new(
+            "and class else false for fun if nil or print return super this true var while",
+        );
+        let tokens = scanner.scan_tokens();
+        assert_token(
+            tokens.get(0).unwrap(),
+            TokenType::And,
+            Lexeme::String("and"),
+            1,
+        );
+        assert_token(
+            tokens.get(1).unwrap(),
+            TokenType::Class,
+            Lexeme::String("class"),
+            1,
+        );
+        assert_token(
+            tokens.get(2).unwrap(),
+            TokenType::Else,
+            Lexeme::String("else"),
+            1,
+        );
+        assert_token(
+            tokens.get(3).unwrap(),
+            TokenType::False,
+            Lexeme::String("false"),
+            1,
+        );
+        assert_token(
+            tokens.get(4).unwrap(),
+            TokenType::For,
+            Lexeme::String("for"),
+            1,
+        );
+        assert_token(
+            tokens.get(5).unwrap(),
+            TokenType::Fun,
+            Lexeme::String("fun"),
+            1,
+        );
+        assert_token(
+            tokens.get(6).unwrap(),
+            TokenType::If,
+            Lexeme::String("if"),
+            1,
+        );
+        assert_token(
+            tokens.get(7).unwrap(),
+            TokenType::Nil,
+            Lexeme::String("nil"),
+            1,
+        );
+        assert_token(
+            tokens.get(8).unwrap(),
+            TokenType::Or,
+            Lexeme::String("or"),
+            1,
+        );
+        assert_token(
+            tokens.get(9).unwrap(),
+            TokenType::Print,
+            Lexeme::String("print"),
+            1,
+        );
+        assert_token(
+            tokens.get(10).unwrap(),
+            TokenType::Return,
+            Lexeme::String("return"),
+            1,
+        );
+        assert_token(
+            tokens.get(11).unwrap(),
+            TokenType::Super,
+            Lexeme::String("super"),
+            1,
+        );
+        assert_token(
+            tokens.get(12).unwrap(),
+            TokenType::This,
+            Lexeme::String("this"),
+            1,
+        );
+        assert_token(
+            tokens.get(13).unwrap(),
+            TokenType::True,
+            Lexeme::String("true"),
+            1,
+        );
+        assert_token(
+            tokens.get(14).unwrap(),
+            TokenType::Var,
+            Lexeme::String("var"),
+            1,
+        );
+        assert_token(
+            tokens.get(15).unwrap(),
+            TokenType::While,
+            Lexeme::String("while"),
             1,
         );
     }
