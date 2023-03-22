@@ -207,7 +207,7 @@ mod tests {
     }
 
     #[test]
-    fn signle_charater() {
+    fn single_charater() {
         let mut scanner = Scanner::new("* + - ( } ) { , . ;");
         scanner.scan_tokens();
         assert_eq!(scanner.tokens.get(0).unwrap().token_type, TokenType::Star);
