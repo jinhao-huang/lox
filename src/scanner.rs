@@ -192,7 +192,7 @@ impl<'a> Scanner<'a> {
 #[cfg(test)]
 mod tests {
     use crate::scanner::Scanner;
-    use crate::token::{Lexeme, TokenType, Token};
+    use crate::token::{Lexeme, Token, TokenType};
     use peekmore::PeekMore;
 
     #[test]
@@ -209,48 +209,168 @@ mod tests {
     fn single_charater() {
         let mut scanner = Scanner::new("* + - ( } ) { , . ;");
         let tokens = scanner.scan_tokens();
-        assert_token(tokens.get(0).unwrap(), TokenType::Star, Lexeme::String("*"), 1);
-        assert_token(tokens.get(1).unwrap(), TokenType::Plus, Lexeme::String("+"), 1);
-        assert_token(tokens.get(2).unwrap(), TokenType::Minus, Lexeme::String("-"), 1);
-        assert_token(tokens.get(3).unwrap(), TokenType::LeftParen, Lexeme::String("("), 1);
-        assert_token(tokens.get(4).unwrap(), TokenType::RightBrace, Lexeme::String("}"), 1);
-        assert_token(tokens.get(5).unwrap(), TokenType::RightParen, Lexeme::String(")"), 1);
-        assert_token(tokens.get(6).unwrap(), TokenType::LeftBrace, Lexeme::String("{"), 1);
-        assert_token(tokens.get(7).unwrap(), TokenType::Comma, Lexeme::String(","), 1);
-        assert_token(tokens.get(8).unwrap(), TokenType::Dot, Lexeme::String("."), 1);
-        assert_token(tokens.get(9).unwrap(), TokenType::Semicolon, Lexeme::String(";"), 1);
+        assert_token(
+            tokens.get(0).unwrap(),
+            TokenType::Star,
+            Lexeme::String("*"),
+            1,
+        );
+        assert_token(
+            tokens.get(1).unwrap(),
+            TokenType::Plus,
+            Lexeme::String("+"),
+            1,
+        );
+        assert_token(
+            tokens.get(2).unwrap(),
+            TokenType::Minus,
+            Lexeme::String("-"),
+            1,
+        );
+        assert_token(
+            tokens.get(3).unwrap(),
+            TokenType::LeftParen,
+            Lexeme::String("("),
+            1,
+        );
+        assert_token(
+            tokens.get(4).unwrap(),
+            TokenType::RightBrace,
+            Lexeme::String("}"),
+            1,
+        );
+        assert_token(
+            tokens.get(5).unwrap(),
+            TokenType::RightParen,
+            Lexeme::String(")"),
+            1,
+        );
+        assert_token(
+            tokens.get(6).unwrap(),
+            TokenType::LeftBrace,
+            Lexeme::String("{"),
+            1,
+        );
+        assert_token(
+            tokens.get(7).unwrap(),
+            TokenType::Comma,
+            Lexeme::String(","),
+            1,
+        );
+        assert_token(
+            tokens.get(8).unwrap(),
+            TokenType::Dot,
+            Lexeme::String("."),
+            1,
+        );
+        assert_token(
+            tokens.get(9).unwrap(),
+            TokenType::Semicolon,
+            Lexeme::String(";"),
+            1,
+        );
     }
 
     #[test]
     fn two_character() {
         let mut scanner = Scanner::new("!= == <= >=");
         let tokens = scanner.scan_tokens();
-        assert_token(tokens.get(0).unwrap(), TokenType::BangEqual, Lexeme::String("!="), 1);
-        assert_token(tokens.get(1).unwrap(), TokenType::EqualEqual, Lexeme::String("=="), 1);
-        assert_token(tokens.get(2).unwrap(), TokenType::LessEqual, Lexeme::String("<="), 1);
-        assert_token(tokens.get(3).unwrap(), TokenType::GreaterEqual, Lexeme::String(">="), 1);
+        assert_token(
+            tokens.get(0).unwrap(),
+            TokenType::BangEqual,
+            Lexeme::String("!="),
+            1,
+        );
+        assert_token(
+            tokens.get(1).unwrap(),
+            TokenType::EqualEqual,
+            Lexeme::String("=="),
+            1,
+        );
+        assert_token(
+            tokens.get(2).unwrap(),
+            TokenType::LessEqual,
+            Lexeme::String("<="),
+            1,
+        );
+        assert_token(
+            tokens.get(3).unwrap(),
+            TokenType::GreaterEqual,
+            Lexeme::String(">="),
+            1,
+        );
     }
 
     #[test]
     fn whitespace() {
         let mut scanner = Scanner::new(" + \t - \r * \n = // test hahahhaha \n > <");
         let tokens = scanner.scan_tokens();
-        assert_token(tokens.get(0).unwrap(), TokenType::Plus, Lexeme::String("+"), 1);
-        assert_token(tokens.get(1).unwrap(), TokenType::Minus, Lexeme::String("-"), 1);
-        assert_token(tokens.get(2).unwrap(), TokenType::Star, Lexeme::String("*"), 1);
-        assert_token(tokens.get(3).unwrap(), TokenType::Equal, Lexeme::String("="), 2);
-        assert_token(tokens.get(4).unwrap(), TokenType::Greater, Lexeme::String(">"), 3);
-        assert_token(tokens.get(5).unwrap(), TokenType::Less, Lexeme::String("<"), 3);
+        assert_token(
+            tokens.get(0).unwrap(),
+            TokenType::Plus,
+            Lexeme::String("+"),
+            1,
+        );
+        assert_token(
+            tokens.get(1).unwrap(),
+            TokenType::Minus,
+            Lexeme::String("-"),
+            1,
+        );
+        assert_token(
+            tokens.get(2).unwrap(),
+            TokenType::Star,
+            Lexeme::String("*"),
+            1,
+        );
+        assert_token(
+            tokens.get(3).unwrap(),
+            TokenType::Equal,
+            Lexeme::String("="),
+            2,
+        );
+        assert_token(
+            tokens.get(4).unwrap(),
+            TokenType::Greater,
+            Lexeme::String(">"),
+            3,
+        );
+        assert_token(
+            tokens.get(5).unwrap(),
+            TokenType::Less,
+            Lexeme::String("<"),
+            3,
+        );
     }
 
     #[test]
     fn slash() {
         let mut scanner = Scanner::new("// test hahahhaha \n + - * / // + -");
         let tokens = scanner.scan_tokens();
-        assert_token(tokens.get(0).unwrap(), TokenType::Plus, Lexeme::String("+"), 2);
-        assert_token(tokens.get(1).unwrap(), TokenType::Minus, Lexeme::String("-"), 2);
-        assert_token(tokens.get(2).unwrap(), TokenType::Star, Lexeme::String("*"), 2);
-        assert_token(tokens.get(3).unwrap(), TokenType::Slash, Lexeme::String("/"), 2);
+        assert_token(
+            tokens.get(0).unwrap(),
+            TokenType::Plus,
+            Lexeme::String("+"),
+            2,
+        );
+        assert_token(
+            tokens.get(1).unwrap(),
+            TokenType::Minus,
+            Lexeme::String("-"),
+            2,
+        );
+        assert_token(
+            tokens.get(2).unwrap(),
+            TokenType::Star,
+            Lexeme::String("*"),
+            2,
+        );
+        assert_token(
+            tokens.get(3).unwrap(),
+            TokenType::Slash,
+            Lexeme::String("/"),
+            2,
+        );
         assert!(tokens.get(4).is_none());
     }
 
@@ -258,20 +378,60 @@ mod tests {
     fn string() {
         let mut scanner = Scanner::new(r##" "test" "test2" "test3" "##);
         let tokens = scanner.scan_tokens();
-        assert_token(tokens.get(0).unwrap(), TokenType::String, Lexeme::String("test"), 1);
-        assert_token(tokens.get(1).unwrap(), TokenType::String, Lexeme::String("test2"), 1);
-        assert_token(tokens.get(2).unwrap(), TokenType::String, Lexeme::String("test3"), 1);
+        assert_token(
+            tokens.get(0).unwrap(),
+            TokenType::String,
+            Lexeme::String("test"),
+            1,
+        );
+        assert_token(
+            tokens.get(1).unwrap(),
+            TokenType::String,
+            Lexeme::String("test2"),
+            1,
+        );
+        assert_token(
+            tokens.get(2).unwrap(),
+            TokenType::String,
+            Lexeme::String("test3"),
+            1,
+        );
     }
 
     #[test]
     fn number() {
         let mut scanner = Scanner::new("123 123.123 123.7890123 123.7890123456789 4242489748472");
         let tokens = scanner.scan_tokens();
-        assert_token(tokens.get(0).unwrap(), TokenType::Number, Lexeme::Number(123.0), 1);
-        assert_token(tokens.get(1).unwrap(), TokenType::Number, Lexeme::Number(123.123), 1);
-        assert_token(tokens.get(2).unwrap(), TokenType::Number, Lexeme::Number(123.7890123), 1);
-        assert_token(tokens.get(3).unwrap(), TokenType::Number, Lexeme::Number(123.7890123456789), 1);
-        assert_token(tokens.get(4).unwrap(), TokenType::Number, Lexeme::Number(4242489748472.0), 1);
+        assert_token(
+            tokens.get(0).unwrap(),
+            TokenType::Number,
+            Lexeme::Number(123.0),
+            1,
+        );
+        assert_token(
+            tokens.get(1).unwrap(),
+            TokenType::Number,
+            Lexeme::Number(123.123),
+            1,
+        );
+        assert_token(
+            tokens.get(2).unwrap(),
+            TokenType::Number,
+            Lexeme::Number(123.7890123),
+            1,
+        );
+        assert_token(
+            tokens.get(3).unwrap(),
+            TokenType::Number,
+            Lexeme::Number(123.7890123456789),
+            1,
+        );
+        assert_token(
+            tokens.get(4).unwrap(),
+            TokenType::Number,
+            Lexeme::Number(4242489748472.0),
+            1,
+        );
     }
 
     fn assert_token(token: &Token, token_type: TokenType, lexeme: Lexeme, line: u32) {
