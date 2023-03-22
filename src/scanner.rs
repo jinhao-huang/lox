@@ -24,7 +24,7 @@ impl<'a> Scanner<'a> {
         }
     }
 
-    pub fn scan_tokens(&mut self) {
+    pub fn scan_tokens(&mut self) -> &Vec<Token<'a>> {
         loop {
             self.whitespace();
             self.start = self.current;
@@ -58,6 +58,7 @@ impl<'a> Scanner<'a> {
                 None => break,
             }
         }
+        &self.tokens
     }
 
     fn report(&self, message: &str) {
