@@ -240,7 +240,7 @@ mod tests {
     }
 
     #[test]
-    fn single_charater() {
+    fn single_character() {
         let mut scanner = Scanner::new("* + - ( } ) { , . ;");
         let tokens = scanner.scan_tokens();
         assert_token(
